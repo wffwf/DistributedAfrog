@@ -1,0 +1,44 @@
+# -------------------------------------------------------------------------
+# afrog 分布式扫描 - 复用 beholder 的 redis / mongo（宿主机桥接模式）
+#
+# 前提：redis(6379)/mongo(27017) 已作为容器在宿主机运行，
+#       且端口 0.0.0.0 已映射到宿主机。
+# master/worker 容器通过 host.docker.internal 访问宿主机上的实例。
+# (Windows/Mac Docker Desktop 自带该域名；Linux 需 extra_hosts: host-gateway)
+#
+# 如果你希望和服务同网络直连容器名，请改用 docker-compose.merged.yml
+# -------------------------------------------------------------------------
+services:
+  master:
+    build: ./master
+    container_name: afrog-master
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:18001:8080"
+    environment:
+      MONGO_URI: mongodb://${MONGO_USER:-scan}:${MONGO_PASSWORD:?...请在 .env 设置 MONGO_PASSWORD}@host.docker.internal:27017/?authSource=admin
+      MONGO_DB: ${MONGO_DB:-afrog}
+      REDIS_URL: redis://:${REDIS_PASSWORD:?...请在 .env 设置 REDIS_PASSWORD(redis requirepass)}@host.docker.internal:6379/${REDIS_DB:-2}
+      MASTER_PASSWORD: ${MASTER_PASSWORD:-afrog@1234}
+      SECRET_KEY: ${SECRET_KEY:-afrog-master-secret-change-me}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # Windows Desktop 无需此条；Linux 需要。保留无害。
+    depends_on: []
+
+  worker:
+    build: ./worker
+    restart: unless-stopped
+    environment:
+      MONGO_URI: mongodb://${MONGO_USER:-scan}:${MONGO_PASSWORD:?...请在 .env 设置 MONGO_PASSWORD}@host.docker.internal:27017/?authSource=admin
+      MONGO_DB: ${MONGO_DB:-afrog}
+      REDIS_URL: redis://:${REDIS_PASSWORD:?...请在 .env 设置 REDIS_PASSWORD(redis requirepass)}@host.docker.internal:6379/${REDIS_DB:-2}
+      WORKER_ID: ${WORKER_ID:-}
+      AFROG_BIN: /app/afrog-bin/afrog
+      AFROG_VERSION: ${AFROG_VERSION:-latest}
+      SCAN_TIMEOUT: ${SCAN_TIMEOUT:-1200}
+    volumes:
+      - ./afrog-bin:/app/afrog-bin
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on: []

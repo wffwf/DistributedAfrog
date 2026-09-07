@@ -1,0 +1,83 @@
+# =====================================================================
+# 融合的一体化部署文件
+# 在一个 compose 内： redis/mongo + afrog 的 master/worker
+#
+# 数据隔离说明：afrog 只用 mongo 内单独的 afrog 库、redis 里 afrog: 前缀键，
+# =====================================================================
+
+services:
+  #--------------------- beholder 既有基础设施 ---------------------
+  redis:
+    image: redis:5.0.3
+    container_name: beholder_redis
+    restart: always
+    ports:
+      - "0.0.0.0:6379:6379/tcp"
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - ${BEHOLDER_DATA:-./data}/redis/data:/data
+      - ${BEHOLDER_DATA:-./data}/redis/config/redis.conf:/usr/local/etc/redis/redis.conf
+
+  mongo:
+    image: mongo:8.0.17
+    container_name: beholder_mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-scan}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:?...请在 .env 中设置 MONGO_PASSWORD(beholder mongo root 密码)}
+    volumes:
+      - "${BEHOLDER_DATA:-./data}/mongodb/db:/data/db"
+      - "${BEHOLDER_DATA:-./data}/mongodb/tmp:/tmp/db"
+    ports:
+      - "0.0.0.0:27017:27017/tcp"
+
+  #--------------------- afrog / 主控 ---------------------
+  master:
+    build: ./master
+    container_name: afrog-master
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      MONGO_HOST: ${MONGO_HOST:-beholder_mongo}
+      MONGO_PORT: ${MONGO_PORT:-27017}
+      MONGO_USER: ${MONGO_USER:-scan}
+      MONGO_PASSWORD: ${MONGO_PASSWORD:?...请在 .env 中设置 MONGO_PASSWORD(beholder mongo 密码)}
+      MONGO_AUTH_SOURCE: ${MONGO_AUTH_SOURCE:-admin}
+      MONGO_DB: ${MONGO_DB:-afrog}
+      REDIS_HOST: ${REDIS_HOST:-beholder_redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?...请在 .env 中设置 REDIS_PASSWORD(redis requirepass)}
+      REDIS_DB: ${REDIS_DB:-2}
+      MASTER_PASSWORD: ${MASTER_PASSWORD:-afrog@1234}
+      SECRET_KEY: ${SECRET_KEY:-afrog-master-secret-change-me}
+    depends_on:
+      - mongo
+      - redis
+
+  #--------------------- afrog / worker ---------------------
+  worker:
+    build: ./worker
+    restart: unless-stopped
+    environment:
+      MONGO_HOST: ${MONGO_HOST:-beholder_mongo}
+      MONGO_PORT: ${MONGO_PORT:-27017}
+      MONGO_USER: ${MONGO_USER:-scan}
+      MONGO_PASSWORD: ${MONGO_PASSWORD:?...请在 .env 中设置 MONGO_PASSWORD(beholder mongo 密码)}
+      MONGO_AUTH_SOURCE: ${MONGO_AUTH_SOURCE:-admin}
+      MONGO_DB: ${MONGO_DB:-afrog}
+      REDIS_HOST: ${REDIS_HOST:-beholder_redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?...请在 .env 中设置 REDIS_PASSWORD(redis requirepass)}
+      REDIS_DB: ${REDIS_DB:-2}
+      WORKER_ID: ${WORKER_ID:-}
+      AFROG_BIN: /app/afrog-bin/afrog
+      AFROG_VERSION: ${AFROG_VERSION:-latest}
+      SCAN_TIMEOUT: ${SCAN_TIMEOUT:-1200}
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-2}
+    volumes:
+      - ./afrog-bin:/app/afrog-bin
+      - ./afrog-config.yaml:/root/.config/afrog/afrog-config.yaml
+    depends_on:
+      - mongo
+      - redis

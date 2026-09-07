@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report List - Afrog Distributed Master</title>
+    <link rel="icon" type="image/svg+xml" href="/static/afrog-logo.svg">
+    <style>
+        html,
+        body,
+        div,
+        span,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        p,
+        pre,
+        a,
+        code,
+        em,
+        img,
+        small,
+        strong,
+        sub,
+        sup,
+        u,
+        i,
+        center,
+        dl,
+        dt,
+        dd,
+        ol,
+        ul,
+        li,
+        fieldset,
+        form,
+        label {
+            margin: 0;
+            padding: 0;
+            border: 0;
+            outline: 0;
+            font-size: 100%;
+            vertical-align: baseline;
+            background: transparent;
+        }
+
+        a {
+            color: #233B46;
+            text-decoration: none;
+            outline: none;
+        }
+
+        a:hover {
+            text-decoration: underline
+        }
+
+        a:focus {
+            outline: none;
+            -moz-outline: none;
+        }
+
+        ol,
+        ul {
+            list-style: none
+        }
+
+        table {
+            border-collapse: collapse;
+            border-spacing: 0
+        }
+
+        xmp {
+            font-family: 'Consolas', 'Menlo', 'Liberation Mono', 'DejaVu Sans Mono', monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: x-small;
+            line-height: 1.6;
+        }
+
+        body {
+            color: #233B46;
+            background-color: #C3CAC4;
+            padding: 5px 5px;
+            min-width: 1220px;
+            overflow: scroll;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        img {
+            border: none
+        }
+
+        .top {
+            width: 100%;
+            font-weight: bold;
+            font-size: 16px;
+            text-align: left;
+            padding-bottom: 5px;
+            padding-top: 5px;
+            background: #4E5B5D;
+            color: #B4C1C3;
+        }
+
+        .clr {
+            clear: both;
+        }
+
+        .request {
+            float: left;
+            overflow-x: auto;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .request .toggleR {
+            z-index: 999999;
+            position: absolute;
+            padding: 0px 10px;
+            background: black;
+            color: white;
+            top: -5px;
+            left: 50%;
+            cursor: pointer;
+            line-height: 1.1;
+        }
+
+        .w50 {
+            width: 50%
+        }
+
+        .w100 {
+            width: 100%
+        }
+
+        .response {
+            float: left;
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 800px;
+            position: relative;
+        }
+
+        .response .toggleL {
+            z-index: 999999;
+            position: absolute;
+            padding: 0px 10px;
+            background: black;
+            color: white;
+            top: -5px;
+            left: 50%;
+            cursor: pointer;
+            line-height: 1.1;
+        }
+
+        .vuln {
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .security {
+            text-align: left;
+        }
+
+        .url {
+            text-align: left;
+            font-weight: 300;
+        }
+
+        table {
+            table-layout: fixed;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        table td {
+            padding: 3px 6px;
+        }
+
+        tbody {
+            display: none;
+        }
+
+        thead {
+            cursor: pointer;
+        }
+
+        .CRITICAL {
+            color: #b454ff;
+            font-weight: bold;
+        }
+
+        .HIGH {
+            color: #E74856;
+            font-weight: bold;
+        }
+
+        .LOW {
+            color: rgb(0, 110, 255);
+            font-weight: bold;
+        }
+
+        .MEDIUM {
+            color: #C19C00;
+            font-weight: bold;
+        }
+
+        .INFO {
+            color: blue;
+            font-weight: bold;
+        }
+
+        .title {
+            color: darkblue;
+            font-weight: bold
+        }
+
+        .w200 {
+            width: 300px
+        }
+
+        .w30 {
+            width: 120px
+        }
+
+        .t10 {
+            width: 10%
+        }
+
+        .t30 {
+            width: 30%
+        }
+
+        .container {
+            width: 100%;
+            text-align: left;
+            padding-bottom: 5px;
+            padding-top: 5px;
+            background: #4E5B5D;
+            color: #B4C1C3;
+        }
+
+        button {
+            background-color: #333;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 20px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+
+        input[type="text"],
+        select {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 5px;
+        }
+
+        #severity {
+            background-color: #fff;
+            color: #333;
+        }
+
+        #search {
+            background-color: #fff;
+            color: #333;
+        }
+
+        #filter-button {
+            background-color: #333;
+            color: #fff;
+        }
+
+        #filter-button:hover {
+            background-color: #555;
+        }
+
+        .critical {
+            color: purple;
+            font-weight: bold;
+        }
+
+        .high {
+            color: red;
+            font-weight: bold;
+        }
+
+        .medium {
+            color: #C19C00;
+            font-weight: bold;
+        }
+
+        .low {
+            color: rgb(0, 110, 255);
+            font-weight: bold;
+        }
+
+        .info {
+            color: blue;
+            font-weight: bold;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .logo {
+            max-width: 30px;
+            margin: 0 10px;
+        }
+
+        .nav-link {
+            color: #B4C1C3;
+            font-weight: bold;
+            margin: 0 12px;
+            text-decoration: none;
+        }
+
+        .nav-link:hover {
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .nav-link.active {
+            color: #fff;
+        }
+
+        .scroll-top-button {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background-color: #4E5B5D;
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            text-align: center;
+            line-height: 40px;
+            font-size: 24px;
+        }
+
+        .scroll-top-button:hover {
+            background-color: #0056b3;
+        }
+
+        .copy-button {
+            display: inline-block;
+            padding: 2px 2px;
+            background-color: rgba(92, 184, 92, 0.7);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            right: 20px;
+            position: absolute;
+            font-size: xx-small;
+        }
+
+        .copy-button:hover {
+            background-color: rgba(92, 184, 92, 0.9);
+        }
+
+        .latency {
+            position: absolute;
+            right: 0;
+            font-size: xx-small;
+            color: #B4C1C3;
+        }
+
+        .pager {
+            text-align: center;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="/static/afrog-logo.svg" alt="Afrog Logo" class="logo"><b class="medium">A F R O G</b>&nbsp;&nbsp;
+            <a class="nav-link active" href="/results">Reports</a>
+            <a class="nav-link" href="/tasks">Tasks</a>
+            <a class="nav-link" href="/tasks/new">New Scan</a>
+            <a class="nav-link" href="/workers">Workers</a>
+            <a class="nav-link" href="/logout">Logout</a>
+            <span style="font-size:12px;color:darkgrey;margin-left:auto;margin-right:10px;">Afrog Distributed Master</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <div class="filter">
+                <label>Severity:</label>
+                {% for name in ['critical', 'high', 'medium', 'low', 'info'] %}
+                <label>
+                    <input type="checkbox" name="severity" value="{{ name }}" {% if name in sevs %}checked{% endif %}> {{ name }}
+                </label>
+                {% endfor %}
+                &nbsp;
+                <label for="search">Vulnerability: </label>
+                <input type="text" id="search" placeholder="Search by POC ID or Name" value="{{ keyword }}">
+                &nbsp;
+                <button id="filter-button">Search</button>
+                &nbsp;
+                <span>Current: {{ total }}</span>
+            </div>
+        </div>
+    </div>
+
+    {% if results %}
+    {% for item in results %}
+    <table>
+        <thead onclick="toggleBody(this)" style="background:#DDE2DE">
+            <td colspan="3">
+                <span class="vuln">{{ item.get('id', '') }}</span>&nbsp;&nbsp;
+                <span class="security {{ item.get('severity', '').upper() }}">{{ item.get('severity', '').upper() }}</span>&nbsp;&nbsp;
+                <span class="url">{{ item.get('fulltarget', '') }}</span>
+            </td>
+        </thead>
+        <tbody>
+            <tr>
+                <td colspan="3">
+                    <b>name:</b> {{ item.get('name', '') }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>author:</b>
+                    {{ item.get('author', '') }}
+                    <b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;worker:</b> {{ item.get('worker_id', '') }}
+                    {% if item.get('description') %}
+                    <br /><b>description:</b>
+                    <span style="white-space: pre-line;">
+                        {{ item.get('description', '') }}
+                    </span>
+                    {% endif %}
+
+                    {% if item.get('reference') %}
+                    <b>reference:</b>
+                    {% for ref in item.get('reference', []) %}
+                    <br />&nbsp;&nbsp;- <a href='{{ ref }}' target='_blank'>{{ ref }}</a>
+                    {% endfor %}
+                    {% endif %}
+                </td>
+            </tr>
+            {% if item.get('request') or item.get('response') %}
+            <tr>
+                <td colspan="3" style="border-top:1px solid #60786F"><a href="{{ item.get('fulltarget', '') }}" target="_blank">{{ item.get('fulltarget', '') }}</a></td>
+            </tr>
+            <tr>
+                <td colspan="3" style="background: #223B46; color: #DDE2DE;">
+                    <div class="clr">
+                        <div class="request w50">
+                            <div class="toggleR" onclick="toggleRequest(this)">→</div>
+                            <div class="copy-button" onclick="copyXmp(this)">Copy</div>
+                            <xmp>{{ item.get('request', '') }}</xmp>
+                        </div>
+                        <div class="response w50">
+                            <div class="toggleL" onclick="toggleResponse(this)">←</div>
+                            <div class="latency">{{ item.get('latency', 0) }} ms</div>
+                            <xmp>{{ item.get('response', '') }}</xmp>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+    {% endfor %}
+    {% else %}
+    <table>
+        <thead>
+            <td colspan="3" align="center">No matching</td>
+        </thead>
+    </table>
+    {% endif %}
+
+    <div class="pager">
+        <button id="prevPage">Previous Page</button>&nbsp;
+        <span id="currentPage">Page: {{ page }} / {{ page_count }}</span>&nbsp;
+        <button id="nextPage">Next Page</button>&nbsp;
+        <span>Current: {{ total }}</span>
+    </div>
+
+    <div id="scrollTopButton" class="scroll-top-button" onclick="scrollToTop()">
+        <span>&uarr;</span>
+    </div>
+
+    <script>
+        var currentPage = {{ page }};
+        var pageCount = {{ page_count }};
+        var severityParam = "{{ severity }}";
+        var keywordParam = "{{ keyword }}";
+        var scanIdParam = "{{ scan_id }}";
+
+        function toggleBody(thead) {
+            var tb = thead.nextElementSibling;
+            if (tb.style.display === 'none' || tb.style.display === '') {
+                tb.style.display = 'table-row-group';
+            } else {
+                tb.style.display = 'none';
+            }
+        }
+
+        function toggleRequest(el) {
+            var req = el.parentElement;
+            var res = req.nextElementSibling;
+            if (res) {
+                res.style.display = res.style.display === 'none' ? 'block' : 'none';
+            }
+            if (el.textContent === '→') {
+                el.textContent = '←';
+                el.style.background = 'red';
+                req.classList.remove('w50');
+                req.classList.add('w100');
+            } else {
+                el.textContent = '→';
+                el.style.background = 'black';
+                req.classList.remove('w100');
+                req.classList.add('w50');
+            }
+        }
+
+        function toggleResponse(el) {
+            var res = el.parentElement;
+            var req = res.previousElementSibling;
+            if (req) {
+                req.style.display = req.style.display === 'none' ? 'block' : 'none';
+            }
+            if (el.textContent === '←') {
+                el.textContent = '→';
+                el.style.background = 'red';
+                res.classList.remove('w50');
+                res.classList.add('w100');
+            } else {
+                el.textContent = '←';
+                el.style.background = 'black';
+                res.classList.remove('w100');
+                res.classList.add('w50');
+            }
+        }
+
+        function copyXmp(btn) {
+            var xmp = btn.nextElementSibling;
+            var text = xmp.textContent;
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(function () {
+                    btn.textContent = 'Copied';
+                    setTimeout(function () { btn.textContent = 'Copy'; }, 3000);
+                });
+            } else {
+                btn.textContent = 'Copy';
+            }
+        }
+
+        function buildUrl(page) {
+            return '/results?severity=' + encodeURIComponent(severityParam) +
+                '&keyword=' + encodeURIComponent(keywordParam) +
+                '&scan_id=' + encodeURIComponent(scanIdParam) +
+                '&page=' + page;
+        }
+
+        document.getElementById('filter-button').addEventListener('click', function () {
+            var sevs = [];
+            document.querySelectorAll('input[name="severity"]:checked').forEach(function (cb) {
+                sevs.push(cb.value);
+            });
+            var kw = document.getElementById('search').value.toLowerCase();
+            window.location.href = '/results?severity=' + encodeURIComponent(sevs.join(',')) +
+                '&keyword=' + encodeURIComponent(kw) + '&page=1';
+        });
+
+        document.getElementById('prevPage').addEventListener('click', function () {
+            if (currentPage > 1) window.location.href = buildUrl(currentPage - 1);
+        });
+        document.getElementById('nextPage').addEventListener('click', function () {
+            if (currentPage < pageCount) window.location.href = buildUrl(currentPage + 1);
+        });
+
+        window.onscroll = function () {
+            var btn = document.getElementById('scrollTopButton');
+            if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+                btn.style.display = 'block';
+            } else {
+                btn.style.display = 'none';
+            }
+        };
+
+        function scrollToTop() {
+            var step = -window.scrollY / (500 / 15);
+            var interval = setInterval(function () {
+                if (window.scrollY !== 0) {
+                    window.scrollBy(0, step);
+                } else {
+                    clearInterval(interval);
+                }
+            }, 15);
+        }
+    </script>
+</body>
+
+</html>
